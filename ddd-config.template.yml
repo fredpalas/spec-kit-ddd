@@ -1,0 +1,31 @@
+# DDD Extension Configuration Template
+# Copy to ddd-config.yml and adjust for your project.
+# This file is version controlled.
+# For local overrides, use ddd-config.local.yml (gitignored).
+
+# Path where bounded context artifacts are stored.
+# Default: docs/domain
+domain_docs_path: docs/domain
+
+# Name of the shared kernel directory inside domain_docs_path.
+# Default: shared-kernel
+shared_kernel_name: shared-kernel
+
+# Status values used in discovery.md and model.md.
+# Only change if your team uses a different workflow vocabulary.
+statuses:
+  discovery:
+    in_progress: "In Progress"
+    ready: "Ready for Modeling"
+  model:
+    draft: "Draft"
+    reviewed: "Reviewed"
+    accepted: "Accepted"
+
+# Row status markers used in discovery tables.
+# Emoji or text — must be consistent across sessions.
+row_status:
+  candidate: "🔍 Candidate"
+  confirmed: "✅ Confirmed"
+  rejected: "❌ Rejected"
+  to_shared_kernel: "⬆️ To Shared Kernel"
