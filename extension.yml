@@ -1,34 +1,33 @@
-id: speckit-ddd
-name: DDD Domain Modeling
-version: "1.0.0"
+schema_version: "1.0"
+
+extension:
+  id: "speckit-ddd"
+  name: "DDD Domain Modeling"
+  version: "1.0.0"
+  description: "Domain-Driven Design modeling layer for Spec Kit. Adds discovery and formalization commands that produce bounded context artifacts consumed by /speckit.plan."
+  author: "Adrián Pastén"
+  repository: "https://github.com/fredpalas/spec-kit-ddd"
+  license: "MIT"
+  homepage: "https://github.com/fredpalas/spec-kit-ddd"
+
 requires:
-  speckit_version: ">=1.0.0"
-description: >
-  Domain-Driven Design modeling layer for Spec Kit.
-  Adds /speckit.bc (conversational domain discovery) and /speckit.model
-  (formalization) commands that produce bounded context artifacts
-  consumed by /speckit.plan as explicit contracts.
-author: adrianpasten
-tags:
-  - ddd
-  - domain-modeling
-  - architecture
-  - bounded-context
+  speckit_version: ">=0.1.0"
+
 provides:
   commands:
-    - name: speckit.bc
-      file: commands/speckit.bc.md
-      description: >
-        Conversational Domain Discovery session. Interrogates the domain,
-        detects aggregate candidates, value objects, invariants, and domain
-        events. Updates docs/domain/{bc}/discovery.md incrementally.
-        Language and stack agnostic.
-    - name: speckit.model
-      file: commands/speckit.model.md
-      description: >
-        Formalizes a completed discovery session into structured artifacts:
-        docs/domain/{bc}/model.md and docs/domain/{bc}/model.mermaid.
-        Output is consumed by /speckit.plan as an explicit domain contract.
+    - name: "speckit.speckit-ddd.bc"
+      file: "commands/speckit.bc.md"
+      description: "Conversational Domain Discovery session for a bounded context."
+    - name: "speckit.speckit-ddd.model"
+      file: "commands/speckit.model.md"
+      description: "Formalizes a discovery session into model.md and model.mermaid artifacts."
+
+tags:
+  - "ddd"
+  - "domain-modeling"
+  - "architecture"
+  - "bounded-context"
+
 defaults:
   domain_docs_path: docs/domain
   shared_kernel_name: shared-kernel
