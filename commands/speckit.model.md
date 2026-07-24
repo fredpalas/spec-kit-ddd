@@ -26,6 +26,7 @@ Read the following files in order:
   - At least one confirmed aggregate root
   - At least one confirmed value object with construction rule
   - At least one confirmed invariant
+  - At least one confirmed domain action on an aggregate root
   - At least one confirmed domain event
   - No unresolved ambiguities that affect aggregates or invariants
 
@@ -80,13 +81,22 @@ is NOT responsible for. Use ubiquitous language exclusively.}
 **Lifecycle events:**
 - {EventName} — triggered when {condition}
 
+**Domain actions:**
+
+| Action | Preconditions | Invariants enforced | Emits |
+|---|---|---|---|
+| {actionName(params)} | {state/args required} | {rule kept true} | {Event or —} |
+
 ---
 
 ## Value Objects
 
-| Name | Type | Construction Rule | Invalid States | Scope |
-|---|---|---|---|---|
-| {Name} | {primitive base} | {rule} | {what makes it invalid} | Local \| SK::{name} |
+| Name | Kind | Base / Components | Construction Rule | Invalid States | Scope |
+|---|---|---|---|---|---|
+| {Name} | basic \| composite | {primitive} or {VO + VO} | {rule} | {what makes it invalid} | Local \| SK::{name} |
+
+A basic VO wraps exactly one primitive. A composite VO is built only from other
+VOs. Aggregates, entities and composite VOs never expose a primitive-typed field.
 
 ### {VO Name} — Detail (for non-trivial VOs)
 
@@ -141,7 +151,13 @@ Rules for the diagram:
 - Show association relationships between aggregates and value objects
 - Show emission relationships between aggregates and domain events
   using dashed arrows (`..>`) with label `emits`
-- Do not show method signatures — only properties and their types
+- Show domain actions as methods on aggregate roots ONLY. Signature:
+  `+actionName(ParamType param) ReturnType`, where ReturnType is the emitted
+  domain event when the action emits one, else `void`. Value objects and
+  entities show properties only — no methods.
+- No class may expose a primitive-typed property except a *basic* Value Object,
+  which wraps exactly one primitive. Aggregate roots, entities and composite
+  value objects reference only named types.
 - Types reference SK types with the `SK::` prefix
 
 Example structure:
@@ -154,6 +170,8 @@ classDiagram
     +SK~CustomerId~ customerId
     +Money total
     +OrderStatus status
+    +confirm() OrderPlaced
+    +addLine(ProductId productId, Quantity qty) void
   }
 
   class OrderLine {
@@ -164,11 +182,36 @@ classDiagram
 
   class Money {
     <<ValueObject>>
-    +decimal amount
-    +string currency
+    +Amount amount
+    +Currency currency
+  }
+
+  class Amount {
+    <<ValueObject>>
+    +decimal value
+  }
+
+  class Currency {
+    <<ValueObject>>
+    +string code
   }
 
   class OrderId {
+    <<ValueObject>>
+    +string value
+  }
+
+  class Quantity {
+    <<ValueObject>>
+    +int value
+  }
+
+  class ProductId {
+    <<ValueObject>>
+    +string value
+  }
+
+  class OrderStatus {
     <<ValueObject>>
     +string value
   }
@@ -183,6 +226,8 @@ classDiagram
   Order "1" *-- "1..*" OrderLine : contains
   Order *-- Money : total
   Order *-- OrderId : id
+  Money *-- Amount : amount
+  Money *-- Currency : currency
   Order ..> OrderPlaced : emits
 ```
 
@@ -195,7 +240,7 @@ Present a summary to the architect:
 > "I've generated the domain model for **{BC Name}**:
 >
 > - `docs/domain/{bc}/model.md` — {N} aggregates, {N} value objects,
->   {N} domain events
+>   {N} domain actions, {N} domain events
 > - `docs/domain/{bc}/model.mermaid` — class diagram
 >
 > **Review before accepting:**

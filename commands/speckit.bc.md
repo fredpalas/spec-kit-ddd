@@ -55,8 +55,8 @@ before proceeding.
 ### What you do in this phase
 
 - Ask questions to understand the business domain, not the technology
-- Detect candidates for: aggregate roots, value objects, domain events,
-  invariants, and ubiquitous language terms
+- Detect candidates for: aggregate roots, value objects, domain actions,
+  domain events, invariants, and ubiquitous language terms
 - Surface ambiguities explicitly — do not resolve them silently
 - Propose when a concept should live in the Shared Kernel
 - Update `docs/domain/{bc}/discovery.md` after every exchange
@@ -82,10 +82,14 @@ Prioritize questions in this order:
    (These are value object candidates)
 5. What business rules must never be violated?
    (These are invariants)
-6. What significant things happen in this domain that other parts of the
+6. What operations can change each aggregate, who triggers them, and which
+   invariants must they enforce?
+   (These are domain action / command candidates — each one is a method on the
+   aggregate root that protects the rules and may emit an event)
+7. What significant things happen in this domain that other parts of the
    system might care about?
    (These are domain event candidates)
-7. Are any of the concepts generic enough to be reused across other contexts?
+8. Are any of the concepts generic enough to be reused across other contexts?
    (Shared kernel candidates)
 
 ### Shared Kernel decision rule
@@ -103,6 +107,22 @@ Is it already defined in docs/domain/shared-kernel/model.md?
 ```
 
 Never move a type to the shared kernel without explicit architect approval.
+
+### Primitive encapsulation rule
+
+When a primitive appears in conversation (a string, number, date, boolean,
+money amount, email, id…), it is ALWAYS a Value Object candidate — never data
+that lives raw on an aggregate. Talking about "an email string" or "a price
+number" is shorthand: it means "a value that must be wrapped in a Value Object".
+
+- A *basic* Value Object wraps exactly one primitive (e.g. Email, Quantity, Amount).
+- A *composite* Value Object is composed of other Value Objects, never of raw
+  primitives (e.g. Money = Amount + Currency).
+- Aggregates and entities reference only named types (VOs / other types),
+  never primitives.
+
+Record the underlying primitive only against the basic VO, never against the
+aggregate.
 
 ### Ambiguity handling
 
@@ -141,9 +161,13 @@ If the file does not exist, create it with this structure:
 | Name | Responsibilities | Invariants | Status |
 |---|---|---|---|
 
+## Domain Action Candidates
+| Name | Aggregate | Trigger | Preconditions | Invariants Enforced | Emits | Status |
+|---|---|---|---|---|---|---|
+
 ## Value Object Candidates
-| Name | Construction Rule | Scope | Status |
-|---|---|---|---|
+| Name | Kind | Construction Rule | Scope | Status |
+|---|---|---|---|---|
 
 ## Domain Events
 | Name | Trigger | Payload | Status |
@@ -163,6 +187,10 @@ If the file does not exist, create it with this structure:
 - `❌ Rejected` — discarded with reason noted
 - `⬆️ To Shared Kernel` — proposed or confirmed move to SK
 
+**Kind values for Value Objects:**
+- `basic (wraps {primitive})` — wraps exactly one primitive (e.g. `basic (wraps string)`)
+- `composite ({VO} + {VO})` — composed only of other VOs (e.g. `composite (Amount + Currency)`)
+
 **Scope values for Value Objects:**
 - `Local` — belongs only to this BC
 - `SK::{name}` — references an existing shared kernel type
@@ -178,6 +206,8 @@ When all of the following are true, propose transitioning to `/speckit.model`:
 ✅ At least one aggregate root identified and confirmed
 ✅ At least one value object with a non-trivial construction rule confirmed
 ✅ At least one invariant articulated and confirmed
+✅ At least one domain action confirmed on an aggregate root, with the
+   invariant(s) it enforces and the event(s) it emits (if any)
 ✅ At least one domain event named and confirmed
 ✅ All ubiquitous language key terms confirmed
 ✅ No open ambiguities that affect the model (unresolved ones are deferred)
@@ -189,6 +219,7 @@ Propose closure with a brief summary — do not generate formal artifacts yet:
 >
 > **BC**: {name}
 > **Aggregates**: {list}
+> **Domain actions**: {list, noting the aggregate each belongs to}
 > **Value Objects**: {list, noting SK references}
 > **Key invariants**: {list}
 > **Domain events**: {list}
