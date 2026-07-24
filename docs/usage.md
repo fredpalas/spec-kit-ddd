@@ -102,6 +102,12 @@ well-named, and changed by coordination, not unilaterally.
 
 ## File reference
 
+Artifacts are written under `{domain_docs_path}` (default `docs/domain`),
+**relative to the project root** (the directory containing `.specify/`), never
+relative to the extension's install directory. Change the location by setting
+`domain_docs_path` in `ddd-config.yml`. Both commands confirm the resolved path
+with you before creating the first file in a session.
+
 ### `discovery.md` — status values
 
 | Status | Meaning |

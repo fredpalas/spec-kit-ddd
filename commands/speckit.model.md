@@ -12,6 +12,35 @@ and Mermaid. You never generate code.
 
 ## Bootstrap (silent — do before saying anything)
 
+### Path resolution (do this first)
+
+All paths in this prompt are relative to the **project root** — the directory
+that contains the `.specify/` directory (equivalently, the git repository root).
+NEVER resolve a path relative to the current working subdirectory or to the
+extension's own install directory (`.specify/extensions/speckit-ddd/`).
+
+Resolve the artifact base path:
+
+1. `root` = the project root (the directory containing `.specify/`).
+2. Read config to get `domain_docs_path` and `shared_kernel_name`:
+   - `{root}/ddd-config.yml` if it exists,
+   - then `{root}/ddd-config.local.yml` overrides on top,
+   - else fall back to the template defaults: `domain_docs_path: docs/domain`,
+     `shared_kernel_name: shared-kernel`.
+3. `base` = `{root}/{domain_docs_path}`. Shared kernel = `{base}/{shared_kernel_name}`.
+
+Throughout this prompt, any `docs/domain/...` path denotes `{base}/...` — the
+config-resolved, root-anchored location, never a literal relative path.
+
+**Hard write policy:**
+- Read and write artifacts ONLY under `{base}`.
+- NEVER write inside `.specify/`, inside the extension's install directory, or
+  anywhere outside `{base}`.
+- If the project root cannot be determined unambiguously (no `.specify/` and not a
+  git repo), STOP and ask the architect for the target location before writing.
+
+### Read existing context
+
 Read the following files in order:
 
 1. `.speckit.constitution` — project principles and conventions
@@ -44,6 +73,15 @@ context. Suggest running `/speckit.bc` first. Do not generate artifacts.
 ---
 
 ## Formalization
+
+Before creating the first artifact file in this session, state the resolved
+absolute path and ask the architect to confirm it, e.g.:
+
+> I'll write to: `{root}/{domain_docs_path}/{bc}/model.md`
+> Confirm this location before I create it? (yes / change path)
+
+Only create files after confirmation. Reuse the confirmed base for the rest of
+the session without asking again.
 
 When the discovery session is valid, generate two files:
 
@@ -291,3 +329,4 @@ all BCs that reference these types — coordinate before modifying.
 - Modify existing BC models other than the current one
 - Modify shared kernel types that are already `Accepted` without
   explicit architect instruction
+- Write files outside `{base}`, or anywhere inside `.specify/` or the extension directory
