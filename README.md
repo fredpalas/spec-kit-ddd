@@ -64,11 +64,19 @@ docs/domain/
 
 ## Installation
 
+### Generic install
+
 ```bash
-specify extension add speckit-ddd
+specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/vX.Y.Z.zip
 ```
 
-Set up configuration:
+### Last version install
+
+```bash
+specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/v0.3.0-alpha.zip
+```
+
+### Set up configuration:
 
 ```bash
 cp .specify/extensions/ddd/ddd-config.template.yml \
@@ -79,8 +87,14 @@ cp .specify/extensions/ddd/ddd-config.template.yml \
 
 ### Starting a discovery session
 
+*Copilot:*
 ```
-/speckit.bc
+/speckit.speckit-ddd.bc
+```
+
+*Claude:*
+```
+/speckit-speckit-ddd-bc
 ```
 
 The agent reads your constitution, existing models, and current
@@ -93,7 +107,7 @@ mark the session as ready for formalization.
 ### Formalizing the model
 
 ```
-/speckit.model
+/speckit.speckit-ddd.model
 ```
 
 Reads the discovery session and generates `model.md` and
@@ -103,7 +117,7 @@ Reads the discovery session and generates `model.md` and
 ### Resuming a session
 
 ```
-/speckit.bc
+/speckit.speckit-ddd.bc
 ```
 
 The agent detects the existing `discovery.md` and resumes from the
