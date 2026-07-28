@@ -30,7 +30,7 @@ produces structured artifacts the agent cannot deviate from.
 
 ## Commands
 
-### `/speckit.bc` — Domain Discovery
+### `/speckit.speckit-ddd.bc` — Domain Discovery
 
 Conversational session to identify the domain model of a bounded context.
 Language and stack agnostic. The agent interrogates the domain, detects
@@ -40,7 +40,7 @@ and updates `docs/domain/{bc}/discovery.md` incrementally.
 Sessions are resumable — run `/speckit.bc` again to continue where you
 left off.
 
-### `/speckit.model` — Model Formalization
+### `/speckit.speckit-ddd.model` — Model Formalization
 
 Reads a completed discovery session and produces:
 
