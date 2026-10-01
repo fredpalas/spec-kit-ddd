@@ -11,7 +11,7 @@
 # Run it from a clone, or: curl -fsSL <raw url>/scripts/install.sh | bash -s -- ...
 set -euo pipefail
 
-REPO_URL="https://github.com/fredpalas/spec-kit-ddd"
+REPO_URL="${DDD_REPO_URL:-https://github.com/fredpalas/spec-kit-ddd}"
 AGENTS_SUPPORTED="claude copilot cursor opencode agents"
 
 FRAMEWORK=auto
@@ -43,12 +43,14 @@ if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
   candidate="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   [ -d "$candidate/dist" ] && SRC="$candidate"
 fi
+DOWNLOAD_DIR=""
+trap '[ -z "$DOWNLOAD_DIR" ] || rm -rf "$DOWNLOAD_DIR"' EXIT
 fetch_source() {
   [ -n "$SRC" ] && return
-  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-  curl -fsSL "$REPO_URL/archive/$REF.tar.gz" | tar -xz -C "$tmp" --strip-components=1 \
+  DOWNLOAD_DIR="$(mktemp -d)"
+  curl -fsSL "$REPO_URL/archive/$REF.tar.gz" | tar -xz -C "$DOWNLOAD_DIR" --strip-components=1 \
     || die "could not download $REPO_URL ($REF)"
-  SRC="$tmp"
+  SRC="$DOWNLOAD_DIR"
 }
 
 agent_path() { # agent cmd

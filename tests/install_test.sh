@@ -97,4 +97,15 @@ assert_contains "$TMP/specify.args" "extension add --dev $REPO --force"
 assert_no_file "$dir/.claude/skills/ddd-bc"
 assert_file "$dir/ddd-config.yml"
 
+echo "install: piped through bash (curl | bash) downloads the archive and cleans up"
+mkdir -p "$TMP/archive" "$TMP/pkg"
+cp -r "$REPO" "$TMP/pkg/spec-kit-ddd-main"
+tar -czf "$TMP/archive/main.tar.gz" -C "$TMP/pkg" spec-kit-ddd-main
+dir="$(new_project piped none)"
+(cd "$dir" && DDD_REPO_URL="file://$TMP" bash -s -- --agent claude < "$INSTALL" > "$TMP/piped.out" 2>&1) \
+  && pass "piped install exits 0" || { fail "piped install exited non-zero"; cat "$TMP/piped.out"; }
+assert_file "$dir/.claude/skills/ddd-bc/SKILL.md"
+assert_not_contains "$TMP/piped.out" "unbound variable"
+assert_not_contains "$TMP/piped.out" "sin asignar"
+
 finish
