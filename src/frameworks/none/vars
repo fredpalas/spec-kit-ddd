@@ -1,0 +1,4 @@
+BC_CMD=/ddd-bc
+MODEL_CMD=/ddd-model
+PIPELINE=a spec-driven development workflow
+PLANNER=the planning step

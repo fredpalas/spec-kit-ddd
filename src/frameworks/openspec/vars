@@ -1,0 +1,4 @@
+BC_CMD=/ddd-bc
+MODEL_CMD=/ddd-model
+PIPELINE=an OpenSpec spec-driven workflow
+PLANNER=OpenSpec's `/opsx:propose` (its design and tasks artifacts)
