@@ -97,6 +97,28 @@ assert_contains "$TMP/specify.args" "extension add --dev $REPO --force"
 assert_no_file "$dir/.claude/skills/ddd-bc"
 assert_file "$dir/ddd-config.yml"
 
+echo "install: OpenSpec rules — suggested by default, appended with --patch-openspec"
+dir="$(new_project os-suggest openspec)"
+"$INSTALL" --target "$dir" --agent claude > "$TMP/os.out" 2>&1
+assert_not_contains "$dir/openspec/config.yaml" "ddd-modeling"
+assert_contains "$TMP/os.out" "rules:"
+
+dir="$(new_project os-patch openspec)"; echo "domain_docs_path: docs/podium-domain" > "$dir/ddd-config.yml"
+"$INSTALL" --target "$dir" --agent claude --patch-openspec >/dev/null
+assert_contains "$dir/openspec/config.yaml" "schema: spec-driven"
+assert_contains "$dir/openspec/config.yaml" "rules:"
+assert_contains "$dir/openspec/config.yaml" "  design:"
+assert_contains "$dir/openspec/config.yaml" "  tasks:"
+assert_contains "$dir/openspec/config.yaml" "docs/podium-domain"
+"$INSTALL" --target "$dir" --agent claude --patch-openspec >/dev/null
+[ "$(grep -c '^rules:' "$dir/openspec/config.yaml")" = 1 ] && pass "patch is idempotent" || fail "rules: appended twice"
+
+dir="$(new_project os-existing openspec)"; printf 'rules:\n  proposal:\n    - Keep it short\n' >> "$dir/openspec/config.yaml"
+cp "$dir/openspec/config.yaml" "$TMP/before.yaml"
+"$INSTALL" --target "$dir" --agent claude --patch-openspec > "$TMP/os.out" 2>&1
+assert_succeeds "existing rules: are left untouched" diff -q "$TMP/before.yaml" "$dir/openspec/config.yaml"
+assert_contains "$TMP/os.out" "merge"
+
 echo "install: piped through bash (curl | bash) downloads the archive and cleans up"
 mkdir -p "$TMP/archive" "$TMP/pkg"
 cp -r "$REPO" "$TMP/pkg/spec-kit-ddd-main"

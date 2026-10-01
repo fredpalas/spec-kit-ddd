@@ -1,11 +1,13 @@
-# speckit-ddd
+# ddd-modeling (speckit-ddd)
 
-> Domain-Driven Design modeling layer for [Spec Kit](https://github.com/github/spec-kit).
+> Domain-Driven Design modeling layer for spec-driven development —
+> works with [Spec Kit](https://github.com/github/spec-kit),
+> [OpenSpec](https://github.com/Fission-AI/OpenSpec), or no framework at all.
 
-Adds a domain discovery and formalization phase between `/speckit.specify`
-and `/speckit.plan`. Produces bounded context artifacts that agentic
-code generation tasks use as explicit contracts — eliminating primitive
-obsession and anemic domain models from AI-generated code.
+Adds a domain discovery and formalization phase between writing a spec and
+planning it. Produces bounded context artifacts that agentic code generation
+uses as explicit contracts — eliminating primitive obsession and anemic
+domain models from AI-generated code.
 
 ## Why
 
@@ -19,109 +21,119 @@ produces structured artifacts the agent cannot deviate from.
 
 ## Pipeline
 
-```
-/speckit.constitution
-  └─ /speckit.specify
-       └─ /speckit.bc      ← conversational discovery (this extension)
-            └─ /speckit.model   ← formalization (this extension)
-                 └─ /speckit.plan    ← tasks with domain contracts
-                      └─ code generation
-```
+| Spec Kit | OpenSpec | No framework |
+|---|---|---|
+| `/speckit.constitution` | `openspec/config.yaml` `context:` | `AGENTS.md` / `CLAUDE.md` |
+| `/speckit.specify` | an active change (`proposal.md`) | describe the feature in chat |
+| **`/speckit.speckit-ddd.bc`** | **`/ddd-bc`** | **`/ddd-bc`** |
+| **`/speckit.speckit-ddd.model`** | **`/ddd-model`** | **`/ddd-model`** |
+| `/speckit.plan` | `/opsx:propose` (design + tasks) | your planning step |
 
 ## Commands
 
-### `/speckit.bc` — Domain Discovery
+### Discovery — `/ddd-bc` (`/speckit.speckit-ddd.bc` in Spec Kit)
 
 Conversational session to identify the domain model of a bounded context.
-Language and stack agnostic. The agent interrogates the domain, detects
-candidates for aggregates, value objects, invariants, and domain events,
-and updates `docs/domain/{bc}/discovery.md` incrementally.
+Language and stack agnostic. The agent asks one question at a time, detects
+candidates for aggregates, value objects, collections, invariants, domain
+actions, domain events and read models, and updates
+`docs/domain/{bc}/discovery.md` after every exchange. Read-only contexts
+(logs, reporting, search) are first-class: they close with read models and
+read invariants instead of aggregates.
 
-Sessions are resumable — run `/speckit.bc` again to continue where you
-left off.
+Sessions are resumable — run the command again to continue where you left off.
 
-### `/speckit.model` — Model Formalization
+### Formalization — `/ddd-model` (`/speckit.speckit-ddd.model` in Spec Kit)
 
 Reads a completed discovery session and produces:
 
 - `docs/domain/{bc}/model.md` — structured domain model
 - `docs/domain/{bc}/model.mermaid` — Mermaid class diagram
 
-These files are the contract for `/speckit.plan`.
+These files are the contract for planning.
 
 ## Artifacts
 
 ```
-docs/domain/
+docs/domain/                  # domain_docs_path in ddd-config.yml
 ├── shared-kernel/
-│   ├── model.md          # Types shared across bounded contexts
-│   └── model.mermaid
+│   └── model.md              # Types shared across bounded contexts
 └── {bc-name}/
-    ├── discovery.md      # Discovery session (Fase 1 output)
-    ├── model.md          # Formal domain model (Fase 2 output)
-    └── model.mermaid     # Class diagram
+    ├── discovery.md          # Discovery session
+    ├── model.md              # Formal domain model
+    └── model.mermaid         # Class diagram
 ```
 
 ## Installation
 
+### Spec Kit
+
 ```bash
 specify extension add speckit-ddd
+# or from a clone / a branch:
+specify extension add --dev /path/to/spec-kit-ddd
 ```
 
-Set up configuration:
+Spec Kit renders the commands for every agent it was initialised with.
+
+### OpenSpec or no framework
+
+From the project root, pick one or more agents:
 
 ```bash
-cp .specify/extensions/ddd/ddd-config.template.yml \
-   .specify/extensions/ddd/ddd-config.yml
+curl -fsSL https://raw.githubusercontent.com/fredpalas/spec-kit-ddd/main/scripts/install.sh \
+  | bash -s -- --agent claude,copilot
+# or from a clone:
+/path/to/spec-kit-ddd/scripts/install.sh --agent claude
 ```
 
-## Usage
+| `--agent` | Installed as |
+|---|---|
+| `claude` | `.claude/skills/ddd-{bc,model}/SKILL.md` |
+| `copilot` | `.github/prompts/ddd-{bc,model}.prompt.md` |
+| `cursor` | `.cursor/commands/ddd-{bc,model}.md` |
+| `opencode` | `.opencode/command/ddd-{bc,model}.md` |
+| `agents` | `.agents/skills/ddd-{bc,model}/SKILL.md` (Codex and other Agent Skills readers) |
 
-### Starting a discovery session
+The framework is detected (`.specify/` → Spec Kit, `openspec/` → OpenSpec,
+otherwise none); force it with `--framework`. In a Spec Kit project the
+installer simply calls `specify extension add`.
+
+For OpenSpec, `--patch-openspec` appends `rules:` to `openspec/config.yaml` so
+the design and tasks artifacts use the accepted models as their contract.
+Without the flag — or if `rules:` already exists — the snippet is printed for
+you to merge.
+
+Both paths create `ddd-config.yml` from the template if it does not exist.
+
+### Updating
+
+Re-run the same install command. `install.sh --check` reports the installed
+version of every copy and exits non-zero if one is outdated. Artifacts record
+the version that wrote them, and an older prompt warns before using them.
+
+## Development
+
+Prompts are assembled from a framework-agnostic core plus one adapter per
+framework:
 
 ```
-/speckit.bc
+src/core/{bc,model}.md        # DDD rules
+src/core/partials/            # shared bootstrap sections
+src/frameworks/{fw}/          # root, context sources, handoff, command names
+dist/{fw}/{bc,model}.md       # generated — committed
 ```
 
-The agent reads your constitution, existing models, and current
-specification. It will ask about the domain — describe the business
-problem. The session updates `discovery.md` after every exchange.
-
-When coverage is complete, the agent proposes closure. Confirm to
-mark the session as ready for formalization.
-
-### Formalizing the model
-
-```
-/speckit.model
+```bash
+scripts/build.sh              # regenerate dist/
+scripts/build.sh --check      # fail if dist/ is stale
+bash tests/build_test.sh && bash tests/install_test.sh
 ```
 
-Reads the discovery session and generates `model.md` and
-`model.mermaid`. Review both files. When satisfied, set
-`**Status**: Accepted` in `model.md` and run `/speckit.plan`.
-
-### Resuming a session
-
-```
-/speckit.bc
-```
-
-The agent detects the existing `discovery.md` and resumes from the
-open items.
-
-## Shared Kernel
-
-Types proposed during discovery as shared kernel candidates are added
-to `docs/domain/shared-kernel/model.md` during `/speckit.model`.
-
-All BCs reference shared kernel types as `SK::{TypeName}` — they are
-never redefined locally.
-
-## Requirements
-
-- Spec Kit >= 1.0.0
-- A project initialized with `specify init`
-- `.speckit.constitution` describing your project context
+Never reference a top-level directory of this repo (`dist/`, `src/`, …) or
+`scripts/`, `templates/`, `memory/` from a prompt: Spec Kit rewrites such
+references to `.specify/extensions/speckit-ddd/...` on install. The build test
+guards this.
 
 ## License
 

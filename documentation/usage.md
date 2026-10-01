@@ -1,4 +1,4 @@
-# Usage Guide — speckit-ddd
+# Usage Guide — ddd-modeling (speckit-ddd)
 
 ## The problem this extension solves
 
@@ -8,23 +8,32 @@ primitive-obsessed, anemic code. Each task independently decides that
 exists only in the architect's head and leaks inconsistently into the
 codebase.
 
-`speckit-ddd` makes the domain model a first-class artifact that every
+ddd-modeling makes the domain model a first-class artifact that every
 task references by contract.
+
+Command names below use the OpenSpec / framework-less form (`/ddd-bc`,
+`/ddd-model`). In Spec Kit they are `/speckit.speckit-ddd.bc` and
+`/speckit.speckit-ddd.model`.
 
 ---
 
 ## Workflow walkthrough
 
-### Step 1 — Write your specification
+### Step 1 — Describe the feature
 
-Before running `/speckit.bc`, have a `/speckit.specify` that describes
-the feature or system you are modeling. The discovery agent reads it
-as context.
+Before running `/ddd-bc`, describe the feature or system you are modeling:
+a Spec Kit spec (`/speckit.specify`), an OpenSpec change (`proposal.md`), or —
+without a framework — just tell the agent. The discovery agent reads it as
+context, together with the project context (Spec Kit constitution, OpenSpec
+`config.yaml` `context:`, or `AGENTS.md` / `CLAUDE.md`). When that is missing
+it falls back to a context map or architecture doc and tells you which file it
+used.
 
-### Step 2 — Run `/speckit.bc`
+### Step 2 — Run `/ddd-bc`
 
-The agent bootstraps from your constitution, existing models, and
-specification. It will ask about the business domain.
+The agent bootstraps from the project context, existing models, and the
+current feature. It will ask about the business domain — and, early on,
+whether this context changes state or only reads data produced elsewhere.
 
 **Good answers to give the agent:**
 - Describe the business problem in business language, not technical terms
@@ -45,7 +54,7 @@ specification. It will ask about the business domain.
 
 ### Step 3 — Review `discovery.md`
 
-Before running `/speckit.model`, review the discovery file.
+Before running `/ddd-model`, review the discovery file.
 You can edit it directly — the agent reads it, not the conversation.
 
 Confirm that:
@@ -54,7 +63,7 @@ Confirm that:
 - Value objects have construction rules defined
 - Open ambiguities that affect the model are resolved
 
-### Step 4 — Run `/speckit.model`
+### Step 4 — Run `/ddd-model`
 
 The agent reads `discovery.md` and generates:
 
@@ -67,10 +76,50 @@ Review both. Edit directly if needed. When satisfied:
 **Status**: Accepted
 ```
 
-### Step 5 — Run `/speckit.plan`
+### Step 5 — Plan
 
-Spec Kit's plan command reads `model.md` as a contract. Each generated
-task will reference the specific aggregate, VO, or event it implements.
+- **Spec Kit**: `/speckit.plan` reads `model.md` as a contract.
+- **OpenSpec**: `/opsx:propose`. Install with `--patch-openspec` (or merge the
+  printed snippet) so the design and tasks artifacts are told to use the
+  accepted models.
+- **No framework**: hand `model.md` to your planning step.
+
+Each task should reference the specific aggregate, VO, read model or event
+it implements.
+
+---
+
+## Modeling patterns
+
+### Read-only contexts
+
+A context that only reads data another part of the system produces (logs,
+metrics, search, reporting) has no aggregate and usually no domain events.
+Discovery records `**Kind**: Read-only` and closes on a different checklist:
+read models with their fields, read invariants (what a read must never
+return), the producer of the data, and how reads are expressed. Events that
+will exist later are recorded as `🕓 Deferred`.
+
+### Primitives are value objects
+
+As soon as you describe a value by its primitive shape ("an ISO 8601 date in
+UTC", "a number between 1 and 1000"), the agent records a basic VO with that
+construction rule. Only rule-free fields of a read model (free text, opaque
+payload) may stay primitive.
+
+### Collections
+
+"A list of X" becomes a named collection (`MemberCollection`) with its element
+type and list-level rules (not empty, no duplicates…). Set `collections` in
+`ddd-config.yml`: `typed-class` (a class per collection — e.g. PHP) or
+`native` (`List<X>`, with `X` still a named type).
+
+### Rule placement
+
+Each confirmed rule is recorded with where it lives — domain, Criteria,
+boundary (validation, authorization) or infrastructure — so the application
+service only orchestrates. Dynamic reads ("filter by X, last N") are proposed
+as `SK::Criteria` given to a repository.
 
 ---
 
@@ -100,11 +149,22 @@ well-named, and changed by coordination, not unilaterally.
 
 ---
 
+## Keeping installed copies up to date
+
+Re-run the install: `specify extension add speckit-ddd` (Spec Kit) or
+`install.sh --agent …` (OpenSpec / no framework). `install.sh --check` lists
+the version of every installed copy and fails if one is outdated. Artifacts
+record `**Generated with**: ddd-modeling {version}`; a prompt older than an
+artifact it reads warns you before continuing.
+
+---
+
 ## File reference
 
 Artifacts are written under `{domain_docs_path}` (default `docs/domain`),
-**relative to the project root** (the directory containing `.specify/`), never
-relative to the extension's install directory. Change the location by setting
+**relative to the project root** (the directory containing `.specify/` or
+`openspec/`, else the git root), never relative to where the prompt is
+installed. Change the location by setting
 `domain_docs_path` in `ddd-config.yml`. Both commands confirm the resolved path
 with you before creating the first file in a session.
 
@@ -115,6 +175,13 @@ with you before creating the first file in a session.
 | `In Progress` | Session ongoing or paused |
 | `Ready for Modeling` | Coverage complete, architect confirmed |
 
+### `discovery.md` — kind
+
+| Kind | Meaning |
+|---|---|
+| `Read-write` | Changes state through aggregates (default) |
+| `Read-only` | Only reads data produced elsewhere; read models instead of aggregates |
+
 ### `discovery.md` — row status markers
 
 | Marker | Meaning |
@@ -123,6 +190,7 @@ with you before creating the first file in a session.
 | `✅ Confirmed` | Architect validated this |
 | `❌ Rejected` | Discarded — reason noted in comments |
 | `⬆️ To Shared Kernel` | Proposed or confirmed move to SK |
+| `🕓 Deferred` | Confirmed to exist later, out of scope for this model |
 
 ### `model.md` — status values
 

@@ -2,12 +2,14 @@
 # Installs the ddd-modeling prompts (/ddd-bc, /ddd-model) into a project.
 #
 #   install.sh --agent claude[,copilot,...] [--framework auto|speckit|openspec|none]
-#              [--target DIR] [--ref REF]
+#              [--target DIR] [--ref REF] [--patch-openspec]
 #   install.sh --check [--target DIR]
 #
 # Spec Kit projects are handed to `specify extension add`, which renders the
 # commands for every agent Spec Kit was initialised with. OpenSpec and
 # framework-less projects get the prompt copied into each agent's own location.
+# --patch-openspec appends rules to openspec/config.yaml so OpenSpec's design
+# and tasks use the domain model as their contract (otherwise they are printed).
 # Run it from a clone, or: curl -fsSL <raw url>/scripts/install.sh | bash -s -- ...
 set -euo pipefail
 
@@ -19,6 +21,7 @@ AGENTS=""
 TARGET="$PWD"
 REF=main
 CHECK=0
+PATCH_OPENSPEC=0
 
 usage() { sed -n '2,11p' "${BASH_SOURCE[0]:-/dev/null}" 2>/dev/null | sed 's/^# \{0,1\}//'; }
 die() { echo "install.sh: $*" >&2; exit 1; }
@@ -30,6 +33,7 @@ while [ $# -gt 0 ]; do
     --target) TARGET="$2"; shift 2 ;;
     --ref) REF="$2"; shift 2 ;;
     --check) CHECK=1; shift ;;
+    --patch-openspec) PATCH_OPENSPEC=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) die "unknown option: $1" ;;
   esac
@@ -139,6 +143,39 @@ for agent in ${AGENTS//,/ }; do
     echo "installed ${dest#$ROOT/}"
   done
 done
+
+openspec_rules() {
+  local docs
+  docs="$(sed -n 's/^domain_docs_path:[[:space:]]*//p' "$ROOT/ddd-config.yml" | tr -d "\"'" | head -n1)"
+  docs="${docs:-docs/domain}"
+  cat <<RULES
+# ddd-modeling: the accepted domain models are the contract for design and tasks
+rules:
+  design:
+    - Read every model.md with Status Accepted under $docs/ and use it as the contract - aggregates, value objects, collections, read models and domain events by their model names.
+    - No primitive-typed field outside a basic value object, and no generic list of primitives - lists are the named collections from the model.
+    - Application services only orchestrate (load, call the domain, persist, dispatch events) - each rule lives where the model's Rule placement says.
+  tasks:
+    - Each task names the aggregate, value object, read model or domain event from model.md that it implements.
+RULES
+}
+
+if [ "$FRAMEWORK" = openspec ]; then
+  config="$ROOT/openspec/config.yaml"
+  if grep -q '^# ddd-modeling:' "$config" 2>/dev/null; then
+    :
+  elif [ "$PATCH_OPENSPEC" -eq 1 ] && ! grep -q '^rules:' "$config" 2>/dev/null; then
+    { echo; openspec_rules; } >> "$config"
+    echo "added ddd-modeling rules to openspec/config.yaml"
+  else
+    if grep -q '^rules:' "$config" 2>/dev/null; then
+      echo "openspec/config.yaml already has rules: — merge these by hand:"
+    else
+      echo "to make OpenSpec use the domain model as its contract, add this to openspec/config.yaml (or re-run with --patch-openspec):"
+    fi
+    echo; openspec_rules; echo
+  fi
+fi
 
 for legacy in "$ROOT"/.claude/skills/speckit-speckit-ddd-* "$ROOT"/.github/prompts/speckit.speckit-ddd.* "$ROOT"/.github/agents/speckit.speckit-ddd.*; do
   [ -e "$legacy" ] && echo "warning: legacy copy ${legacy#$ROOT/} is not managed by this installer and may be stale — remove it if /ddd-bc replaces it"

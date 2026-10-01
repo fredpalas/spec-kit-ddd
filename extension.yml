@@ -31,3 +31,4 @@ tags:
 defaults:
   domain_docs_path: docs/domain
   shared_kernel_name: shared-kernel
+  collections: typed-class

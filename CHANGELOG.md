@@ -5,6 +5,41 @@ All notable changes to speckit-ddd will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-10-01
+
+### Added
+- OpenSpec and framework-less support: prompts are built from a
+  framework-agnostic core plus a Spec Kit, OpenSpec or "none" adapter
+  (`scripts/build.sh` → `dist/`)
+- `scripts/install.sh` — installs `/ddd-bc` and `/ddd-model` for Claude Code,
+  Copilot, Cursor, OpenCode and generic Agent Skills; delegates to
+  `specify extension add` in Spec Kit projects; `--check` reports stale copies;
+  `--patch-openspec` adds design/tasks rules to `openspec/config.yaml`
+- Read-only bounded contexts: early read/write question, read-only question
+  set and closure checklist, Read Models and Queries in the model,
+  `🕓 Deferred` events, `<<ReadModel>>` / `<<Repository>>` in Mermaid
+- Collection rule, `collection` VO kind, `<<Collection>>` in Mermaid, and the
+  `collections: typed-class | native` config key
+- `## Rule placement` in discovery.md; `SK::Criteria` proposed for dynamic reads
+- Version stamp in every prompt and artifact (`**Generated with**`), with a
+  warning when an installed prompt is older than an artifact it reads
+- Fallback to a context map or architecture doc when there is no project
+  context, stating which file was used; the context map is updated with new
+  shared kernel types
+
+### Changed
+- Primitive note-taking is mechanical, with an exception for rule-free
+  read-model fields
+- Spec Kit context is read from `.specify/memory/constitution.md` and the
+  feature in `.specify/feature.json` (the previous `.speckit.constitution` and
+  `.speckit.specify` never existed)
+
+### Fixed
+- Artifacts written under `.specify/extensions/speckit-ddd/docs/`: Spec Kit
+  rewrites references to the extension's own top-level directories, and this
+  repo had a `docs/` directory. It is now `documentation/`, prompts reference
+  only `{base}/` and `{shared_kernel}/`, and a build test guards it
+
 ## [1.0.0] - 2026-05-20
 
 ### Added
