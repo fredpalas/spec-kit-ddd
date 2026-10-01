@@ -2,3 +2,4 @@ BC_CMD=/ddd-bc
 MODEL_CMD=/ddd-model
 PIPELINE=a spec-driven development workflow
 PLANNER=the planning step
+REINSTALL=run its `install.sh` again; `install.sh --check` reports the installed version

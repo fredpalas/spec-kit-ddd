@@ -29,3 +29,8 @@ row_status:
   confirmed: "✅ Confirmed"
   rejected: "❌ Rejected"
   to_shared_kernel: "⬆️ To Shared Kernel"
+
+# How "a list of X" is represented in the model.
+# typed-class: a named collection type per list (e.g. PHP, where arrays are untyped)
+# native:      the language's own typed list (List<X>); the element type is still a VO
+collections: typed-class

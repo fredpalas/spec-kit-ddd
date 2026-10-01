@@ -2,3 +2,4 @@ BC_CMD=/speckit.speckit-ddd.bc
 MODEL_CMD=/speckit.speckit-ddd.model
 PIPELINE=a Spec Kit agentic pipeline
 PLANNER=`/speckit.plan`
+REINSTALL=run `specify extension add speckit-ddd` again

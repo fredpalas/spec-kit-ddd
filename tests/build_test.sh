@@ -40,6 +40,31 @@ for cmd in bc model; do
 done
 assert_contains "$TMP/dist/none/bc.md" "/ddd-model"
 
+echo "build: every framework carries the DDD rules from the Podium feedback"
+for fw in speckit openspec none; do
+  bc="$TMP/dist/$fw/bc.md"; model="$TMP/dist/$fw/model.md"
+  assert_contains "$bc" "Does this context change state and protect its own rules"
+  assert_contains "$bc" "### Read-only contexts"
+  assert_contains "$bc" "Note-taking is mechanical"
+  assert_contains "$bc" "Exception — read models"
+  assert_contains "$bc" "### Collection rule"
+  assert_contains "$bc" "SK::Criteria"
+  assert_contains "$bc" "**Kind**: Read-write | Read-only"
+  assert_contains "$bc" "## Rule placement"
+  assert_contains "$bc" "**Generated with**: ddd-modeling $VERSION"
+  assert_contains "$bc" "tell the architect which file you used"
+  assert_contains "$model" "## Read Models"
+  assert_contains "$model" "## Queries"
+  assert_contains "$model" "<<ReadModel>>"
+  assert_contains "$model" "<<Repository>>"
+  assert_contains "$model" "<<Collection>>"
+  assert_contains "$model" "🕓 Deferred"
+  assert_contains "$model" "**Generated with**: ddd-modeling $VERSION"
+  assert_contains "$model" "context map"
+  for f in "$bc" "$model"; do assert_contains "$f" "this installed copy is older than"; done
+done
+assert_contains "$REPO/ddd-config.template.yml" "collections: typed-class"
+
 echo "build: Spec Kit's install-time path rewrite leaves speckit prompts untouched"
 # Spec Kit rewrites any "dir/..." reference where dir is a top-level directory of
 # the extension package (plus scripts/, templates/, memory/) to

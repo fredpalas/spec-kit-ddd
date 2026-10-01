@@ -27,11 +27,11 @@ directory this prompt was installed in.
 Resolve the artifact base path:
 
 1. `root` = the project root.
-2. Read config to get `domain_docs_path` and `shared_kernel_name`:
+2. Read config to get `domain_docs_path`, `shared_kernel_name` and `collections`:
    - `{root}/ddd-config.yml` if it exists,
    - then `{root}/ddd-config.local.yml` overrides on top,
    - else fall back to the template defaults: `domain_docs_path: docs/domain`,
-     `shared_kernel_name: shared-kernel`.
+     `shared_kernel_name: shared-kernel`, `collections: typed-class`.
 3. `base` = `{root}/{domain_docs_path}`.
    `shared_kernel` = `{base}/{shared_kernel_name}`.
 
@@ -56,6 +56,12 @@ Spec Kit sources:
   `feature_directory`; the feature is `{feature_directory}/spec.md`. If
   `feature.json` does not exist, use the most recent `specs/*/spec.md`, if any.
 
+If the project context source above is missing or empty, fall back to the first
+that exists of: a context map (`{base}/context-map.md`, or any `context-map*.md`
+in the project's documentation), an architecture overview, `AGENTS.md`,
+`CLAUDE.md`. In your first message, tell the architect which file you used as
+project context — or that you found none. Never skip it silently.
+
 Read the following in order:
 
 1. The project context (above)
@@ -63,16 +69,33 @@ Read the following in order:
 3. `{base}/*/model.md` — existing BC models (if any)
 4. `{base}/{bc}/discovery.md` — the discovery session to formalize
 
+### Version check
+
+This prompt is ddd-modeling **1.1.0**. Every artifact it writes records
+`**Generated with**: ddd-modeling {version}` in its header. If any artifact you
+read records a version newer than 1.1.0, this installed copy is older than
+the version that wrote it: tell the architect before anything else, and suggest
+reinstalling ddd-modeling (run `specify extension add speckit-ddd` again). Continue only if they confirm.
+
 **Before proceeding, verify:**
 
 - `discovery.md` exists and has `**Status**: Ready for Modeling`
-- The coverage checklist is satisfied:
-  - At least one confirmed aggregate root
-  - At least one confirmed value object with construction rule
-  - At least one confirmed invariant
-  - At least one confirmed domain action on an aggregate root
-  - At least one confirmed domain event
-  - No unresolved ambiguities that affect aggregates or invariants
+- The coverage checklist for its `**Kind**` is satisfied (a discovery.md with
+  no `**Kind**` is Read-write):
+  - **Read-write**:
+    - At least one confirmed aggregate root
+    - At least one confirmed value object with construction rule
+    - At least one confirmed invariant
+    - At least one confirmed domain action on an aggregate root
+    - At least one confirmed domain event
+    - No unresolved ambiguities that affect aggregates or invariants
+  - **Read-only**:
+    - At least one confirmed read model, with its fields
+    - At least one confirmed read invariant
+    - The producer of the data recorded
+    - How reads are expressed (Criteria / repository) recorded
+    - "No aggregate" (and "no domain events", when it applies) recorded as decisions
+    - No unresolved ambiguities that affect read models or read invariants
 
 **If status is not `Ready for Modeling`:**
 
@@ -108,7 +131,9 @@ When the discovery session is valid, generate two files:
 **Version**: 1.0.0
 **Status**: Draft | Reviewed | Accepted
 **Date**: {YYYY-MM-DD}
+**Kind**: Read-write | Read-only
 **Source**: discovery.md session {last session date}
+**Generated with**: ddd-modeling 1.1.0
 
 ---
 
@@ -118,6 +143,11 @@ When the discovery session is valid, generate two files:
 is NOT responsible for. Use ubiquitous language exclusively.}
 
 ## Aggregates
+
+<!-- Read-only context: replace this section's content with
+     "None — read-only context. {One sentence: who produces the data.}"
+     and fill Read Models and Queries below. Omit those two sections for a
+     read-write context that has no read models. -->
 
 | Aggregate Root | Responsibilities | Invariants |
 |---|---|---|
@@ -142,14 +172,38 @@ is NOT responsible for. Use ubiquitous language exclusively.}
 
 ---
 
+## Read Models
+
+Immutable DTOs with no behaviour. Fields reference VOs, except rule-free
+primitives (free text, opaque payloads).
+
+| Name | Fields | Source | Read invariants |
+|---|---|---|---|
+| {Name} | {field: VO, ...} | {who produces it, where it lives} | {what a read must never return} |
+
+## Queries
+
+| Repository | Accepts | Returns |
+|---|---|---|
+| {Name} | SK::Criteria | {Read model} |
+
+---
+
 ## Value Objects
 
 | Name | Kind | Base / Components | Construction Rule | Invalid States | Scope |
 |---|---|---|---|---|---|
-| {Name} | basic \| composite | {primitive} or {VO + VO} | {rule} | {what makes it invalid} | Local \| SK::{name} |
+| {Name} | basic \| composite \| collection | {primitive}, {VO + VO} or {element type} | {rule} | {what makes it invalid} | Local \| SK::{name} |
 
 A basic VO wraps exactly one primitive. A composite VO is built only from other
-VOs. Aggregates, entities and composite VOs never expose a primitive-typed field.
+VOs. A collection holds elements of one named type (VO or entity, never a
+primitive); its Construction Rule lists the list-level rules (not empty, no
+duplicates, max size, ordering). Aggregates, entities and composite VOs never
+expose a primitive-typed field, nor a generic list of one.
+
+Collections follow `collections` from the config: with `typed-class`, the
+model names the collection type (`MemberCollection`) everywhere; with
+`native`, it may write `List<{Type}>`, with `{Type}` always a named type.
 
 ### {VO Name} — Detail (for non-trivial VOs)
 
@@ -161,9 +215,12 @@ VOs. Aggregates, entities and composite VOs never expose a primitive-typed field
 
 ## Domain Events
 
-| Event | Trigger | Aggregate | Payload |
-|---|---|---|---|
-| {EventName} | {what causes it} | {which aggregate emits it} | {fields} |
+| Event | Trigger | Aggregate | Payload | Status |
+|---|---|---|---|---|
+| {EventName} | {what causes it} | {which aggregate emits it} | {fields} | Active \| 🕓 Deferred |
+
+A context that will emit an event later lists it as `🕓 Deferred`, so the gap
+is explicit. A context with no events at all says so in one line.
 
 ---
 
@@ -198,18 +255,28 @@ Generate a Mermaid class diagram reflecting the model above.
 Rules for the diagram:
 - Aggregate roots are marked with `<<AggregateRoot>>`
 - Value objects are marked with `<<ValueObject>>`
+- Read models are marked with `<<ReadModel>>`; their readers with
+  `<<Repository>>`. Draw `{Repository} ..> Criteria : searches by` and
+  `{Repository} ..> {ReadModel} : returns`
+- Collections are drawn as their own class marked `<<Collection>>` (with
+  `collections: typed-class`). The owner references the collection by name, and
+  a `contains` relation with multiplicity points to the element type, e.g.
+  `MemberCollection "1" o-- "1..*" UserId : contains`. Never write
+  `List~primitive~`; with `collections: native`, `List~Type~` is allowed only
+  for a named `Type`
 - Domain events are marked with `<<DomainEvent>>`
 - Shared kernel types are marked with `<<SharedKernel>>`
 - Show composition relationships between aggregate root and its entities
 - Show association relationships between aggregates and value objects
 - Show emission relationships between aggregates and domain events
-  using dashed arrows (`..>`) with label `emits`
+  using dashed arrows (`..>`) with label `emits`; a `🕓 Deferred` event is drawn
+  with a dashed arrow labelled `deferred`, never `emits`
 - Show domain actions as methods on aggregate roots ONLY. Signature:
   `+actionName(ParamType param) ReturnType`, where ReturnType is the emitted
   domain event when the action emits one, else `void`. Value objects and
   entities show properties only — no methods.
 - No class may expose a primitive-typed property except a *basic* Value Object,
-  which wraps exactly one primitive. Aggregate roots, entities and composite
+  which wraps exactly one primitive, and a read model's rule-free fields. Aggregate roots, entities and composite
   value objects reference only named types.
 - Types reference SK types with the `SK::` prefix
 
@@ -284,6 +351,64 @@ classDiagram
   Order ..> OrderPlaced : emits
 ```
 
+Example for a read-only context, with a typed collection
+(`collections: typed-class`):
+
+```mermaid
+classDiagram
+  class LogEntry {
+    <<ReadModel>>
+    +Timestamp timestamp
+    +Severity severity
+    +Code code
+    +string message
+    +map payload
+  }
+
+  class LogReader {
+    <<Repository>>
+    +search(SK~Criteria~ criteria) LogEntryCollection
+  }
+
+  class LogEntryCollection {
+    <<Collection>>
+  }
+
+  class Timestamp {
+    <<ValueObject>>
+    +string iso8601Utc
+  }
+
+  class Severity {
+    <<ValueObject>>
+    +string level
+  }
+
+  class Code {
+    <<ValueObject>>
+    +string value
+  }
+
+  class Criteria {
+    <<SharedKernel>>
+  }
+
+  class ErrorObserved {
+    <<DomainEvent>>
+  }
+
+  LogReader ..> Criteria : searches by
+  LogReader ..> LogEntry : returns
+  LogEntryCollection "1" o-- "*" LogEntry : contains
+  LogEntry *-- Timestamp
+  LogEntry *-- Severity
+  LogEntry *-- Code
+  LogReader ..> ErrorObserved : deferred
+```
+
+`message` and `payload` stay primitive because they carry no rule; the
+timestamp (a format), severity (a closed set) and code are VOs.
+
 ---
 
 ## After generating both files
@@ -292,8 +417,8 @@ Present a summary to the architect:
 
 > "I've generated the domain model for **{BC Name}**:
 >
-> - `{base}/{bc}/model.md` — {N} aggregates, {N} value objects,
->   {N} domain actions, {N} domain events
+> - `{base}/{bc}/model.md` — {N} aggregates, {N} read models,
+>   {N} value objects ({N} collections), {N} domain actions, {N} domain events
 > - `{base}/{bc}/model.mermaid` — class diagram
 >
 > **Review before accepting:**
@@ -312,12 +437,19 @@ shared kernel and confirmed by the architect):
 
 1. Add those types to `{shared_kernel}/model.md`
 2. Reference them as `SK::{TypeName}` in the BC model
-3. Note the addition in the summary
+3. If the project has a context map (`{base}/context-map.md`, or the one used
+   as project context), add the type to its shared-kernel list too — this is
+   the one file outside `{base}/{bc}` and `{shared_kernel}` you may edit, and
+   only if it lives under `{base}`. Otherwise say in the summary that the
+   context map was not updated, and why.
+4. Note the addition in the summary
 
 If `{shared_kernel}/model.md` does not exist, create it:
 
 ```markdown
 # Shared Kernel
+
+**Generated with**: ddd-modeling 1.1.0
 
 Types shared across bounded contexts. Changes to this model affect
 all BCs that reference these types — coordinate before modifying.

@@ -8,11 +8,11 @@ directory this prompt was installed in.
 Resolve the artifact base path:
 
 1. `root` = the project root.
-2. Read config to get `domain_docs_path` and `shared_kernel_name`:
+2. Read config to get `domain_docs_path`, `shared_kernel_name` and `collections`:
    - `{root}/ddd-config.yml` if it exists,
    - then `{root}/ddd-config.local.yml` overrides on top,
    - else fall back to the template defaults: `domain_docs_path: docs/domain`,
-     `shared_kernel_name: shared-kernel`.
+     `shared_kernel_name: shared-kernel`, `collections: typed-class`.
 3. `base` = `{root}/{domain_docs_path}`.
    `shared_kernel` = `{base}/{shared_kernel_name}`.
 
