@@ -84,7 +84,7 @@ specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-d
 ### Last version install
 
 ```bash
-specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/v0.3.0-alpha.zip
+specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/v0.4.0-alpha.zip
 ```
 
 Spec Kit renders the commands for every agent it was initialised with, and

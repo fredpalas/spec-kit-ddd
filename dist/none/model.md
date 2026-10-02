@@ -1,4 +1,4 @@
-<!-- ddd-modeling 1.1.0 · framework: none -->
+<!-- ddd-modeling 0.4.0-alpha · framework: none -->
 
 # /ddd-model — Domain Model Formalization
 
@@ -70,9 +70,9 @@ Read the following in order:
 
 ### Version check
 
-This prompt is ddd-modeling **1.1.0**. Every artifact it writes records
+This prompt is ddd-modeling **0.4.0-alpha**. Every artifact it writes records
 `**Generated with**: ddd-modeling {version}` in its header. If any artifact you
-read records a version newer than 1.1.0, this installed copy is older than
+read records a version newer than 0.4.0-alpha, this installed copy is older than
 the version that wrote it: tell the architect before anything else, and suggest
 reinstalling ddd-modeling (re-run its `install.sh`, which installs the latest release tag; `install.sh --check` reports the installed version). Continue only if they confirm.
 
@@ -132,7 +132,7 @@ When the discovery session is valid, generate two files:
 **Date**: {YYYY-MM-DD}
 **Kind**: Read-write | Read-only
 **Source**: discovery.md session {last session date}
-**Generated with**: ddd-modeling 1.1.0
+**Generated with**: ddd-modeling 0.4.0-alpha
 
 ---
 
@@ -449,7 +449,7 @@ If `{shared_kernel}/model.md` does not exist, create it:
 ```markdown
 # Shared Kernel
 
-**Generated with**: ddd-modeling 1.1.0
+**Generated with**: ddd-modeling 0.4.0-alpha
 
 Types shared across bounded contexts. Changes to this model affect
 all BCs that reference these types — coordinate before modifying.

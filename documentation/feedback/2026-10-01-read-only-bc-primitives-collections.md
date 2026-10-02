@@ -2,7 +2,7 @@
 
 **Date**: 2026-10-01
 **Source session**: `/speckit.bc` + `/speckit.model` for the **Observability** bounded context in Podium (Hostium)
-**Status**: Applied in 1.1.0 (prompts now live in `src/core/`; line references below point to the pre-1.1.0 `commands/` files)
+**Status**: Applied in 0.4.0-alpha (prompts now live in `src/core/`; line references below point to the pre-0.4.0-alpha `commands/` files)
 
 ---
 

@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "speckit-ddd"
   name: "DDD Domain Modeling"
-  version: "1.1.0"
+  version: "0.4.0-alpha"
   description: "Domain-Driven Design modeling layer for Spec Kit. Adds discovery and formalization commands that produce bounded context artifacts consumed by /speckit.plan."
   author: "Adrián Pastén"
   repository: "https://github.com/fredpalas/spec-kit-ddd"

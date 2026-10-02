@@ -1,4 +1,4 @@
-<!-- ddd-modeling 1.1.0 · framework: openspec -->
+<!-- ddd-modeling 0.4.0-alpha · framework: openspec -->
 
 # /ddd-bc — Domain Discovery
 
@@ -81,9 +81,9 @@ From this reading, build:
 
 ### Version check
 
-This prompt is ddd-modeling **1.1.0**. Every artifact it writes records
+This prompt is ddd-modeling **0.4.0-alpha**. Every artifact it writes records
 `**Generated with**: ddd-modeling {version}` in its header. If any artifact you
-read records a version newer than 1.1.0, this installed copy is older than
+read records a version newer than 0.4.0-alpha, this installed copy is older than
 the version that wrote it: tell the architect before anything else, and suggest
 reinstalling ddd-modeling (re-run its `install.sh`, which installs the latest release tag; `install.sh --check` reports the installed version). Continue only if they confirm.
 
@@ -300,7 +300,7 @@ If the file does not exist, create it with this structure:
 **Kind**: Read-write | Read-only
 **Last session**: {YYYY-MM-DD}
 **Feature context**: {link to or description of the current feature}
-**Generated with**: ddd-modeling 1.1.0
+**Generated with**: ddd-modeling 0.4.0-alpha
 
 ## Ubiquitous Language
 | Term | Definition | Status |

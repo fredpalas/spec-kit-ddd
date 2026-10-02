@@ -115,7 +115,7 @@ if [ "$CHECK" -eq 1 ]; then
   outdated=0; found=0
   for f in $(installed_files); do
     found=1
-    v="$(grep -o 'ddd-modeling [0-9][0-9.]*' "$ROOT/$f" | head -n1 | cut -d' ' -f2)"
+    v="$(grep -o 'ddd-modeling [0-9][0-9A-Za-z.-]*' "$ROOT/$f" | head -n1 | cut -d' ' -f2)"
     echo "$f: ${v:-unknown}"
     [ "$v" = "$latest" ] || outdated=1
   done
