@@ -31,6 +31,7 @@ produces structured artifacts the agent cannot deviate from.
 
 ## Commands
 
+
 ### Discovery — `/ddd-bc` (`/speckit.speckit-ddd.bc` in Spec Kit)
 
 Conversational session to identify the domain model of a bounded context.
@@ -43,7 +44,9 @@ read invariants instead of aggregates.
 
 Sessions are resumable — run the command again to continue where you left off.
 
+
 ### Formalization — `/ddd-model` (`/speckit.speckit-ddd.model` in Spec Kit)
+
 
 Reads a completed discovery session and produces:
 
@@ -69,9 +72,13 @@ docs/domain/                  # domain_docs_path in ddd-config.yml
 ### Spec Kit
 
 ```bash
-specify extension add speckit-ddd
-# or from a clone / a branch:
-specify extension add --dev /path/to/spec-kit-ddd
+specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/vX.Y.Z.zip
+```
+
+### Last version install
+
+```bash
+specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/v0.3.0-alpha.zip
 ```
 
 Spec Kit renders the commands for every agent it was initialised with.
@@ -98,6 +105,7 @@ curl -fsSL https://raw.githubusercontent.com/fredpalas/spec-kit-ddd/main/scripts
 The framework is detected (`.specify/` → Spec Kit, `openspec/` → OpenSpec,
 otherwise none); force it with `--framework`. In a Spec Kit project the
 installer simply calls `specify extension add`.
+
 
 For OpenSpec, `--patch-openspec` appends `rules:` to `openspec/config.yaml` so
 the design and tasks artifacts use the accepted models as their contract.
