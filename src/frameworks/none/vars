@@ -1,0 +1,5 @@
+BC_CMD=/ddd-bc
+MODEL_CMD=/ddd-model
+PIPELINE=a spec-driven development workflow
+PLANNER=the planning step
+REINSTALL=re-run its `install.sh`, which installs the latest release tag; `install.sh --check` reports the installed version

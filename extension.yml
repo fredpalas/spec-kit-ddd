@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "speckit-ddd"
   name: "DDD Domain Modeling"
-  version: "1.0.0"
+  version: "0.4.0-alpha"
   description: "Domain-Driven Design modeling layer for Spec Kit. Adds discovery and formalization commands that produce bounded context artifacts consumed by /speckit.plan."
   author: "Adrián Pastén"
   repository: "https://github.com/fredpalas/spec-kit-ddd"
@@ -16,10 +16,10 @@ requires:
 provides:
   commands:
     - name: "speckit.speckit-ddd.bc"
-      file: "commands/speckit.bc.md"
+      file: "dist/speckit/bc.md"
       description: "Conversational Domain Discovery session for a bounded context."
     - name: "speckit.speckit-ddd.model"
-      file: "commands/speckit.model.md"
+      file: "dist/speckit/model.md"
       description: "Formalizes a discovery session into model.md and model.mermaid artifacts."
 
 tags:
@@ -31,3 +31,4 @@ tags:
 defaults:
   domain_docs_path: docs/domain
   shared_kernel_name: shared-kernel
+  collections: typed-class

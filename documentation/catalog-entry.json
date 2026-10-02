@@ -1,0 +1,10 @@
+{
+  "id": "speckit-ddd",
+  "name": "DDD Domain Modeling",
+  "description": "Domain-Driven Design discovery and modeling layer. Adds conversational domain discovery and formalization commands that produce bounded context artifacts consumed by /speckit.plan as explicit contracts. Also installable for OpenSpec and framework-less projects.",
+  "author": "fredpalas",
+  "version": "0.4.0-alpha",
+  "tags": ["ddd", "domain-modeling", "architecture", "bounded-context"],
+  "download_url": "https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/v0.4.0-alpha.zip",
+  "repository": "https://github.com/fredpalas/spec-kit-ddd"
+}

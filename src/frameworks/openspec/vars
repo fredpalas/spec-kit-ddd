@@ -1,0 +1,5 @@
+BC_CMD=/ddd-bc
+MODEL_CMD=/ddd-model
+PIPELINE=an OpenSpec spec-driven workflow
+PLANNER=OpenSpec's `/opsx:propose` (its design and tasks artifacts)
+REINSTALL=re-run its `install.sh`, which installs the latest release tag; `install.sh --check` reports the installed version
