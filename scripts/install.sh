@@ -52,7 +52,10 @@ if [ "$DEV" -eq 1 ]; then
   [ -n "$SRC" ] && [ -d "$SRC/dist" ] || die "--dev needs install.sh to be run from a clone of $REPO_URL"
 elif [ -z "$REF" ]; then
   command -v git >/dev/null || die "git is needed to find the latest release — pass --ref vX.Y.Z"
-  REF="$(git ls-remote --tags --refs "$REPO_URL" 'v*' | sed 's#.*refs/tags/##' | sort -V | tail -n1)"
+  # sort -V puts v1.0.0 before v1.0.0-alpha; "~" sorts before anything, as
+  # semver wants for prereleases.
+  REF="$(git ls-remote --tags --refs "$REPO_URL" 'v*' | sed 's#.*refs/tags/##; s/-/~/' \
+    | sort -V | tail -n1 | sed 's/~/-/')"
   [ -n "$REF" ] || die "no release tag found in $REPO_URL — pass --ref vX.Y.Z or use --dev"
 fi
 
@@ -63,6 +66,8 @@ fetch_source() {
   DOWNLOAD_DIR="$(mktemp -d)"
   curl -fsSL "$REPO_URL/archive/refs/tags/$REF.tar.gz" | tar -xz -C "$DOWNLOAD_DIR" --strip-components=1 \
     || die "could not download $REF from $REPO_URL"
+  [ -f "$DOWNLOAD_DIR/VERSION" ] && [ -d "$DOWNLOAD_DIR/dist" ] \
+    || die "$REF predates install.sh (it has no dist/) — use a newer tag with --ref"
   SRC="$DOWNLOAD_DIR"
 }
 

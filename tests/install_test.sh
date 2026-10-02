@@ -12,13 +12,17 @@ REMOTE="$TMP/remote"
 mkdir -p "$TMP/pkg"
 cp -r "$REPO" "$REMOTE"; rm -rf "$REMOTE/.git"
 git -C "$REMOTE" init -q && git -C "$REMOTE" add -A && git -C "$REMOTE" -c user.email=t@t -c user.name=t commit -qm fake
-for tag in v1.0.0 v1.2.0 v1.10.0; do
+for tag in v1.0.0 v1.2.0 v1.10.0-alpha v1.10.0; do
   git -C "$REMOTE" tag "$tag"
   mkdir -p "$REMOTE/archive/refs/tags"
   cp -r "$REPO" "$TMP/pkg/spec-kit-ddd-${tag#v}"; rm -rf "$TMP/pkg/spec-kit-ddd-${tag#v}/.git"
   echo "${tag#v}" > "$TMP/pkg/spec-kit-ddd-${tag#v}/VERSION"
   tar -czf "$REMOTE/archive/refs/tags/$tag.tar.gz" -C "$TMP/pkg" "spec-kit-ddd-${tag#v}"
 done
+# A release from before dist/ existed (prompts lived in commands/).
+mkdir -p "$TMP/pkg/spec-kit-ddd-0.3.0-alpha/commands"
+tar -czf "$REMOTE/archive/refs/tags/v0.3.0-alpha.tar.gz" -C "$TMP/pkg" spec-kit-ddd-0.3.0-alpha
+git -C "$REMOTE" tag v0.3.0-alpha
 export DDD_REPO_URL="file://$REMOTE"
 
 new_project() { # name framework
@@ -137,11 +141,18 @@ install_dev --target "$dir" --agent claude --patch-openspec > "$TMP/os.out" 2>&1
 assert_succeeds "existing rules: are left untouched" diff -q "$TMP/before.yaml" "$dir/openspec/config.yaml"
 assert_contains "$TMP/os.out" "merge"
 
-echo "install: by default the latest tag is installed (semver order, not lexical)"
+echo "install: by default the latest tag is installed (semver order: v1.10.0 > v1.10.0-alpha > v1.2.0)"
 dir="$(new_project tagged openspec)"
 "$INSTALL" --target "$dir" --agent claude > "$TMP/tag.out" 2>&1 || { fail "install from tag exited non-zero"; cat "$TMP/tag.out"; }
 assert_contains "$TMP/tag.out" "ddd-modeling 1.10.0 installed"
 assert_file "$dir/.claude/skills/ddd-bc/SKILL.md"
+
+echo "install: a tag older than the installer layout fails before touching the project"
+dir="$(new_project old-tag none)"
+"$INSTALL" --target "$dir" --agent claude --ref v0.3.0-alpha > "$TMP/old.out" 2>&1 && fail "old tag install succeeded" || pass "old tag install fails"
+assert_contains "$TMP/old.out" "v0.3.0-alpha predates install.sh"
+assert_no_file "$dir/ddd-config.yml"
+assert_no_file "$dir/.claude"
 
 echo "install --ref: installs that tag"
 dir="$(new_project pinned none)"
