@@ -2,15 +2,16 @@
 # Installs the ddd-modeling prompts (/ddd-bc, /ddd-model) into a project.
 #
 #   install.sh --agent claude[,copilot,...] [--framework auto|speckit|openspec|none]
-#              [--target DIR] [--ref REF] [--patch-openspec]
-#   install.sh --check [--target DIR]
+#              [--target DIR] [--ref vX.Y.Z | --dev] [--patch-openspec]
+#   install.sh --check [--target DIR] [--ref vX.Y.Z | --dev]
 #
-# Spec Kit projects are handed to `specify extension add`, which renders the
-# commands for every agent Spec Kit was initialised with. OpenSpec and
-# framework-less projects get the prompt copied into each agent's own location.
-# --patch-openspec appends rules to openspec/config.yaml so OpenSpec's design
-# and tasks use the domain model as their contract (otherwise they are printed).
-# Run it from a clone, or: curl -fsSL <raw url>/scripts/install.sh | bash -s -- ...
+# Installs the latest release tag by default; --ref pins a tag, and --dev uses
+# the clone this script lives in. Spec Kit projects are handed to
+# `specify extension add --from=<tag zip>`, which renders the commands for every
+# agent Spec Kit was initialised with. OpenSpec and framework-less projects get
+# the prompt copied into each agent's own location. --patch-openspec appends
+# rules to openspec/config.yaml so OpenSpec's design and tasks use the domain
+# model as their contract (otherwise they are printed).
 set -euo pipefail
 
 REPO_URL="${DDD_REPO_URL:-https://github.com/fredpalas/spec-kit-ddd}"
@@ -19,11 +20,12 @@ AGENTS_SUPPORTED="claude copilot cursor opencode agents"
 FRAMEWORK=auto
 AGENTS=""
 TARGET="$PWD"
-REF=main
+REF=""
+DEV=0
 CHECK=0
 PATCH_OPENSPEC=0
 
-usage() { sed -n '2,11p' "${BASH_SOURCE[0]:-/dev/null}" 2>/dev/null | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,15p' "${BASH_SOURCE[0]:-/dev/null}" 2>/dev/null | sed 's/^# \{0,1\}//'; }
 die() { echo "install.sh: $*" >&2; exit 1; }
 
 while [ $# -gt 0 ]; do
@@ -32,6 +34,7 @@ while [ $# -gt 0 ]; do
     --framework) FRAMEWORK="$2"; shift 2 ;;
     --target) TARGET="$2"; shift 2 ;;
     --ref) REF="$2"; shift 2 ;;
+    --dev) DEV=1; shift ;;
     --check) CHECK=1; shift ;;
     --patch-openspec) PATCH_OPENSPEC=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -41,19 +44,25 @@ done
 
 ROOT="$(git -C "$TARGET" rev-parse --show-toplevel 2>/dev/null || (cd "$TARGET" && pwd))"
 
-# Source: the clone this script lives in, else a downloaded archive of REF.
+# Source: the clone this script lives in (--dev), else the archive of a tag.
 SRC=""
-if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
-  candidate="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  [ -d "$candidate/dist" ] && SRC="$candidate"
+if [ "$DEV" -eq 1 ]; then
+  [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ] \
+    && SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  [ -n "$SRC" ] && [ -d "$SRC/dist" ] || die "--dev needs install.sh to be run from a clone of $REPO_URL"
+elif [ -z "$REF" ]; then
+  command -v git >/dev/null || die "git is needed to find the latest release — pass --ref vX.Y.Z"
+  REF="$(git ls-remote --tags --refs "$REPO_URL" 'v*' | sed 's#.*refs/tags/##' | sort -V | tail -n1)"
+  [ -n "$REF" ] || die "no release tag found in $REPO_URL — pass --ref vX.Y.Z or use --dev"
 fi
+
 DOWNLOAD_DIR=""
 trap '[ -z "$DOWNLOAD_DIR" ] || rm -rf "$DOWNLOAD_DIR"' EXIT
 fetch_source() {
   [ -n "$SRC" ] && return
   DOWNLOAD_DIR="$(mktemp -d)"
-  curl -fsSL "$REPO_URL/archive/$REF.tar.gz" | tar -xz -C "$DOWNLOAD_DIR" --strip-components=1 \
-    || die "could not download $REPO_URL ($REF)"
+  curl -fsSL "$REPO_URL/archive/refs/tags/$REF.tar.gz" | tar -xz -C "$DOWNLOAD_DIR" --strip-components=1 \
+    || die "could not download $REF from $REPO_URL"
   SRC="$DOWNLOAD_DIR"
 }
 
@@ -97,8 +106,8 @@ installed_files() {
 }
 
 if [ "$CHECK" -eq 1 ]; then
-  fetch_source
-  latest="$(cat "$SRC/VERSION")"; outdated=0; found=0
+  if [ "$DEV" -eq 1 ]; then latest="$(cat "$SRC/VERSION")"; else latest="${REF#v}"; fi
+  outdated=0; found=0
   for f in $(installed_files); do
     found=1
     v="$(grep -o 'ddd-modeling [0-9][0-9.]*' "$ROOT/$f" | head -n1 | cut -d' ' -f2)"
@@ -128,8 +137,19 @@ fi
 if [ "$FRAMEWORK" = speckit ]; then
   command -v specify >/dev/null || die "Spec Kit project detected but 'specify' is not installed — see https://github.com/github/spec-kit"
   [ -z "$AGENTS" ] || echo "note: --agent is ignored for Spec Kit; it renders the commands for its own configured agents"
-  (cd "$ROOT" && specify extension add --dev "$SRC" --force)
-  echo "installed speckit-ddd into Spec Kit ($ROOT)"
+  if [ "$DEV" -eq 1 ]; then
+    set -- extension add --dev "$SRC" --force
+  else
+    set -- extension add speckit-ddd --force "--from=$REPO_URL/archive/refs/tags/$REF.zip"
+  fi
+  # specify asks for confirmation on unofficial sources. When this script is
+  # piped (curl | bash) stdin is the script itself, so answer from the terminal.
+  if { : </dev/tty; } 2>/dev/null; then
+    (cd "$ROOT" && specify "$@" </dev/tty) || die "specify $* failed"
+  else
+    (cd "$ROOT" && specify "$@" </dev/null) || die "no terminal to confirm — run in $ROOT: specify $*"
+  fi
+  echo "installed speckit-ddd $(cat "$SRC/VERSION") into Spec Kit ($ROOT)"
   exit 0
 fi
 

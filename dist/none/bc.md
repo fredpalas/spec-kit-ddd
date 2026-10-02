@@ -80,7 +80,7 @@ This prompt is ddd-modeling **1.1.0**. Every artifact it writes records
 `**Generated with**: ddd-modeling {version}` in its header. If any artifact you
 read records a version newer than 1.1.0, this installed copy is older than
 the version that wrote it: tell the architect before anything else, and suggest
-reinstalling ddd-modeling (run its `install.sh` again; `install.sh --check` reports the installed version). Continue only if they confirm.
+reinstalling ddd-modeling (re-run its `install.sh`, which installs the latest release tag; `install.sh --check` reports the installed version). Continue only if they confirm.
 
 ---
 

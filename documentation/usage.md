@@ -151,9 +151,11 @@ well-named, and changed by coordination, not unilaterally.
 
 ## Keeping installed copies up to date
 
-Re-run the install: `specify extension add speckit-ddd` (Spec Kit) or
-`install.sh --agent …` (OpenSpec / no framework). `install.sh --check` lists
-the version of every installed copy and fails if one is outdated. Artifacts
+Re-run the install from the latest release tag: for Spec Kit,
+`specify extension add speckit-ddd --force --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/vX.Y.Z.zip`;
+for OpenSpec / no framework, `install.sh --agent …` (it picks the latest tag;
+`--ref vX.Y.Z` pins one). `install.sh --check` lists the version of every
+installed copy and fails if one is older than the latest tag. Artifacts
 record `**Generated with**: ddd-modeling {version}`; a prompt older than an
 artifact it reads warns you before continuing.
 

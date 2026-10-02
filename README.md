@@ -69,7 +69,13 @@ docs/domain/                  # domain_docs_path in ddd-config.yml
 
 ## Installation
 
+Every install uses a release tag — the latest one unless you pin another.
+See [releases](https://github.com/fredpalas/spec-kit-ddd/tags) for `vX.Y.Z`.
+
 ### Spec Kit
+
+The extension is not in the official catalog yet, so install it from the tag
+archive:
 
 ```bash
 specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/vX.Y.Z.zip
@@ -81,17 +87,25 @@ specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-d
 specify extension add speckit-ddd --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/v0.3.0-alpha.zip
 ```
 
-Spec Kit renders the commands for every agent it was initialised with.
+Spec Kit renders the commands for every agent it was initialised with, and
+asks you to confirm because the source is not the official catalog. The
+installer below does the same with the latest tag.
 
 ### OpenSpec or no framework
 
-From the project root, pick one or more agents:
+From the project root, pick one or more agents. The installer downloads the
+latest release tag:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/fredpalas/spec-kit-ddd/main/scripts/install.sh \
   | bash -s -- --agent claude,copilot
-# or from a clone:
-/path/to/spec-kit-ddd/scripts/install.sh --agent claude
+```
+
+Pin a version with `--ref vX.Y.Z`. To install the working tree of a clone
+instead (development), run its script with `--dev`:
+
+```bash
+/path/to/spec-kit-ddd/scripts/install.sh --dev --agent claude
 ```
 
 | `--agent` | Installed as |
@@ -104,7 +118,8 @@ curl -fsSL https://raw.githubusercontent.com/fredpalas/spec-kit-ddd/main/scripts
 
 The framework is detected (`.specify/` → Spec Kit, `openspec/` → OpenSpec,
 otherwise none); force it with `--framework`. In a Spec Kit project the
-installer simply calls `specify extension add`.
+installer runs the `specify extension add … --from=<tag zip>` command above
+(`--dev` uses `specify extension add --dev <clone>`).
 
 
 For OpenSpec, `--patch-openspec` appends `rules:` to `openspec/config.yaml` so
@@ -116,8 +131,9 @@ Both paths create `ddd-config.yml` from the template if it does not exist.
 
 ### Updating
 
-Re-run the same install command. `install.sh --check` reports the installed
-version of every copy and exits non-zero if one is outdated. Artifacts record
+Re-run the install command — for Spec Kit, `specify extension add` with
+`--force` and the new tag's zip. `install.sh --check` reports the installed
+version of every copy and exits non-zero if one is older than the latest tag. Artifacts record
 the version that wrote them, and an older prompt warns before using them.
 
 ## Development

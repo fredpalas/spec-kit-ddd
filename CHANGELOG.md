@@ -12,8 +12,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   framework-agnostic core plus a Spec Kit, OpenSpec or "none" adapter
   (`scripts/build.sh` → `dist/`)
 - `scripts/install.sh` — installs `/ddd-bc` and `/ddd-model` for Claude Code,
-  Copilot, Cursor, OpenCode and generic Agent Skills; delegates to
-  `specify extension add` in Spec Kit projects; `--check` reports stale copies;
+  Copilot, Cursor, OpenCode and generic Agent Skills from the latest release
+  tag (`--ref` pins one, `--dev` uses a local clone); in Spec Kit projects it
+  runs `specify extension add speckit-ddd --from=<tag zip>`, since the
+  extension is not in the official catalog; `--check` reports copies older
+  than the latest tag;
   `--patch-openspec` adds design/tasks rules to `openspec/config.yaml`
 - Read-only bounded contexts: early read/write question, read-only question
   set and closure checklist, Read Models and Queries in the model,

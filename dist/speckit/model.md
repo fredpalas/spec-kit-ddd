@@ -75,7 +75,7 @@ This prompt is ddd-modeling **1.1.0**. Every artifact it writes records
 `**Generated with**: ddd-modeling {version}` in its header. If any artifact you
 read records a version newer than 1.1.0, this installed copy is older than
 the version that wrote it: tell the architect before anything else, and suggest
-reinstalling ddd-modeling (run `specify extension add speckit-ddd` again). Continue only if they confirm.
+reinstalling ddd-modeling (run `specify extension add speckit-ddd --force --from=https://github.com/fredpalas/spec-kit-ddd/archive/refs/tags/vX.Y.Z.zip` with the latest tag). Continue only if they confirm.
 
 **Before proceeding, verify:**
 
